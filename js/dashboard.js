@@ -10,6 +10,7 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
+  updateDoc,
   doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -26,45 +27,41 @@ const scheduleSection = document.getElementById("scheduleSection");
 const plannerSection = document.getElementById("plannerSection");
 const cgpaSection = document.getElementById("cgpaSection");
 
-// schedule
-const title = document.getElementById("title");
-const time = document.getElementById("time");
-const addBtn = document.getElementById("addBtn");
-const list = document.getElementById("list");
-
-const dayCheckboxes =
-  document.querySelectorAll("#scheduleSection input[type=checkbox]");
-
-// planner
-const taskInput = document.getElementById("taskInput");
-const taskBtn = document.getElementById("taskBtn");
-const taskList = document.getElementById("taskList");
-
-// cgpa
-const subName = document.getElementById("subName");
-const credits = document.getElementById("credits");
-const grade = document.getElementById("grade");
-const addSubBtn = document.getElementById("addSubBtn");
-const cgpaList = document.getElementById("cgpaList");
-const cgpaResult = document.getElementById("cgpaResult");
-
 let currentUser;
 
 
-// ================= NAVIGATION =================
-function showSection(section) {
-  [scheduleSection, plannerSection, cgpaSection]
-    .forEach(s => s.classList.remove("active"));
+// =====================================================
+// ================= TAB SYSTEM (FIXED) =================
+// =====================================================
 
-  section.classList.add("active");
+function showSection(sectionName) {
+
+  const sections = {
+    schedule: scheduleSection,
+    planner: plannerSection,
+    cgpa: cgpaSection
+  };
+
+  Object.values(sections).forEach(s => s.classList.remove("active"));
+
+  sections[sectionName].classList.add("active");
+
+  localStorage.setItem("lastTab", sectionName);
 }
 
-scheduleTab.onclick = () => showSection(scheduleSection);
-plannerTab.onclick = () => showSection(plannerSection);
-cgpaTab.onclick = () => showSection(cgpaSection);
+// restore last opened tab
+const lastTab = localStorage.getItem("lastTab") || "schedule";
+showSection(lastTab);
+
+scheduleTab.onclick = () => showSection("schedule");
+plannerTab.onclick = () => showSection("planner");
+cgpaTab.onclick = () => showSection("cgpa");
 
 
+// =====================================================
 // ================= AUTH =================
+// =====================================================
+
 onAuthStateChanged(auth, (user) => {
 
   if (!user) {
@@ -75,6 +72,7 @@ onAuthStateChanged(auth, (user) => {
   currentUser = user;
   userText.innerText = "Logged in: " + user.email;
 
+  // 🔥 load everything only AFTER auth
   loadSchedule();
   loadPlanner();
   loadCGPA();
@@ -83,26 +81,30 @@ onAuthStateChanged(auth, (user) => {
 logoutBtn.onclick = () => signOut(auth);
 
 
-// ================= SCHEDULE (MULTI DAY) =================
+
+// =====================================================
+// ================= SCHEDULE =================
+// =====================================================
+
+const title = document.getElementById("title");
+const time = document.getElementById("time");
+const addBtn = document.getElementById("addBtn");
+const list = document.getElementById("list");
+
+const dayCheckboxes =
+  document.querySelectorAll("#scheduleSection input[type=checkbox]");
+
 addBtn.onclick = async () => {
 
-  const selectedDays = [];
+  const days = [];
+  dayCheckboxes.forEach(cb => cb.checked && days.push(cb.value));
 
-  dayCheckboxes.forEach(cb => {
-    if (cb.checked) selectedDays.push(cb.value);
-  });
+  if (!title.value || !time.value || !days.length) return;
 
-  if (!title.value || !time.value || selectedDays.length === 0) return;
-
-  // add for each day
-  for (let day of selectedDays) {
+  for (let d of days) {
     await addDoc(
       collection(db, "users", currentUser.uid, "schedule"),
-      {
-        title: title.value,
-        day: day,
-        time: time.value
-      }
+      { title: title.value, day: d, time: time.value }
     );
   }
 
@@ -113,6 +115,7 @@ addBtn.onclick = async () => {
   loadSchedule();
 };
 
+
 async function loadSchedule() {
 
   list.innerHTML = "";
@@ -122,39 +125,52 @@ async function loadSchedule() {
   );
 
   snap.forEach(d => {
-
     const data = d.data();
 
     const li = document.createElement("li");
-    li.innerText = `${data.title} - ${data.day} - ${data.time}`;
+    li.innerText = `${data.title} - ${data.day} - ${data.time} `;
 
     const del = document.createElement("button");
-    del.innerText = " Delete";
+    del.innerText = "Delete";
 
     del.onclick = async () => {
       await deleteDoc(doc(db, "users", currentUser.uid, "schedule", d.id));
       loadSchedule();
     };
 
-    li.appendChild(del);
+    li.append(del);
     list.appendChild(li);
   });
 }
 
 
+
+// =====================================================
 // ================= PLANNER =================
+// =====================================================
+
+const taskInput = document.getElementById("taskInput");
+const taskBtn = document.getElementById("taskBtn");
+const taskList = document.getElementById("taskList");
+const prioritySelect = document.getElementById("priority");
+
 taskBtn.onclick = async () => {
 
   if (!taskInput.value) return;
 
   await addDoc(
     collection(db, "users", currentUser.uid, "planner"),
-    { text: taskInput.value }
+    {
+      text: taskInput.value,
+      priority: prioritySelect.value,
+      done: false
+    }
   );
 
   taskInput.value = "";
   loadPlanner();
 };
+
 
 async function loadPlanner() {
 
@@ -165,14 +181,40 @@ async function loadPlanner() {
   );
 
   snap.forEach(d => {
+
+    const data = d.data();
+
     const li = document.createElement("li");
-    li.innerText = d.data().text;
+
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = data.done;
+
+    check.onchange = async () => {
+      await updateDoc(
+        doc(db, "users", currentUser.uid, "planner", d.id),
+        { done: check.checked }
+      );
+    };
+
+    li.append(check, document.createTextNode(` ${data.text}`));
     taskList.appendChild(li);
   });
 }
 
 
+
+// =====================================================
 // ================= CGPA =================
+// =====================================================
+
+const subName = document.getElementById("subName");
+const credits = document.getElementById("credits");
+const grade = document.getElementById("grade");
+const addSubBtn = document.getElementById("addSubBtn");
+const cgpaList = document.getElementById("cgpaList");
+const cgpaResult = document.getElementById("cgpaResult");
+
 const gradeMap = { O:10, "A+":9, A:8, "B+":7, B:6, C:5 };
 
 addSubBtn.onclick = async () => {
@@ -188,6 +230,7 @@ addSubBtn.onclick = async () => {
 
   loadCGPA();
 };
+
 
 async function loadCGPA() {
 
@@ -207,7 +250,7 @@ async function loadCGPA() {
     creditSum += data.credits;
 
     const li = document.createElement("li");
-    li.innerText = data.subject;
+    li.innerText = `${data.subject} - ${data.credits} - ${data.grade}`;
     cgpaList.appendChild(li);
   });
 

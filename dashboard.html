@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <title>EduTrack Dashboard</title>
 
@@ -38,79 +37,79 @@
       margin: 5px;
       padding: 6px;
     }
-
-    .days label {
-      margin-right: 10px;
-    }
   </style>
 </head>
 
 <body>
 
-  <nav>
-    <button id="scheduleTab">Schedule</button>
-    <button id="plannerTab">Planner</button>
-    <button id="cgpaTab">CGPA</button>
-    <button id="logoutBtn">Logout</button>
-  </nav>
+<nav>
+  <button id="scheduleTab">Schedule</button>
+  <button id="plannerTab">Planner</button>
+  <button id="cgpaTab">CGPA</button>
+  <button id="logoutBtn">Logout</button>
+</nav>
 
-  <p id="user" style="padding:10px"></p>
+<p id="user" style="padding:10px"></p>
 
 
-  <!-- ================= SCHEDULE ================= -->
-  <div id="scheduleSection" class="section active">
+<!-- SCHEDULE -->
+<div id="scheduleSection" class="section">
+  <h3>Scheduler</h3>
 
-    <h3>Scheduler</h3>
+  <input id="title" placeholder="Activity">
 
-    <input id="title" placeholder="Activity / Work / Class">
-
-    <div class="days">
-      <label><input type="checkbox" value="Monday">Mon</label>
-      <label><input type="checkbox" value="Tuesday">Tue</label>
-      <label><input type="checkbox" value="Wednesday">Wed</label>
-      <label><input type="checkbox" value="Thursday">Thu</label>
-      <label><input type="checkbox" value="Friday">Fri</label>
-      <label><input type="checkbox" value="Saturday">Sat</label>
-    </div>
-
-    <input id="time" type="time">
-
-    <button id="addBtn">Add</button>
-
-    <ul id="list"></ul>
+  <div>
+    <label><input type="checkbox" value="Sunday">Sun</label>
+    <label><input type="checkbox" value="Monday">Mon</label>
+    <label><input type="checkbox" value="Tuesday">Tue</label>
+    <label><input type="checkbox" value="Wednesday">Wed</label>
+    <label><input type="checkbox" value="Thursday">Thu</label>
+    <label><input type="checkbox" value="Friday">Fri</label>
+    <label><input type="checkbox" value="Saturday">Sat</label>
   </div>
 
+  <input id="time" type="time">
+  <button id="addBtn">Add</button>
 
-  <!-- ================= PLANNER ================= -->
-  <div id="plannerSection" class="section">
-
-    <h3>Planner</h3>
-
-    <input id="taskInput" placeholder="Enter task">
-    <button id="taskBtn">Add Task</button>
-
-    <ul id="taskList"></ul>
-  </div>
+  <ul id="list"></ul>
+</div>
 
 
-  <!-- ================= CGPA ================= -->
-  <div id="cgpaSection" class="section">
+<!-- PLANNER -->
+<div id="plannerSection" class="section">
 
-    <h3>CGPA Calculator</h3>
+  <h3>Planner</h3>
 
-    <input id="subName" placeholder="Subject">
-    <input id="credits" type="number" placeholder="Credits">
-    <input id="grade" placeholder="Grade">
+  <input id="taskInput" placeholder="Task">
+  <select id="priority">
+    <option>Low</option>
+    <option>Medium</option>
+    <option>High</option>
+  </select>
 
-    <button id="addSubBtn">Add</button>
+  <button id="taskBtn">Add Task</button>
 
-    <ul id="cgpaList"></ul>
+  <ul id="taskList"></ul>
+</div>
 
-    <h3 id="cgpaResult">CGPA: 0</h3>
 
-  </div>
+<!-- CGPA -->
+<div id="cgpaSection" class="section">
 
-  <script type="module" src="./js/dashboard.js"></script>
+  <h3>CGPA</h3>
+
+  <input id="subName" placeholder="Subject">
+  <input id="credits" type="number" placeholder="Credits">
+  <input id="grade" placeholder="Grade">
+
+  <button id="addSubBtn">Add</button>
+
+  <ul id="cgpaList"></ul>
+  <h3 id="cgpaResult">CGPA: 0</h3>
+</div>
+
+
+<script type="module" src="./js/dashboard.js"></script>
 
 </body>
 </html>
