@@ -251,66 +251,211 @@ async function loadSchedule(){
 
 
 
-// =====================================================
-// 📝 PLANNER (same logic)
+/// =====================================================
+// 📝 PLANNER (FULL CRUD + PRIORITY)
 // =====================================================
 
-taskBtn.onclick=async()=>{
-  if(!taskInput.value) return;
+let editTaskId = null;
 
-  await addDoc(collection(db,"users",currentUser.uid,"planner"),{
-    text:taskInput.value,
-    priority:priority.value,
-    done:false
-  });
+taskBtn.onclick = async () => {
+
+  const text = taskInput.value.trim();
+  if (!text) return;
+
+  // EDIT
+  if(editTaskId){
+
+    await updateDoc(
+      doc(db,"users",currentUser.uid,"planner",editTaskId),
+      {
+        text,
+        priority: priority.value
+      }
+    );
+
+    editTaskId = null;
+    taskBtn.innerText = "Add Task";
+  }
+
+  // ADD
+  else{
+
+    await addDoc(
+      collection(db,"users",currentUser.uid,"planner"),
+      {
+        text,
+        priority: priority.value,
+        done:false
+      }
+    );
+  }
 
   taskInput.value="";
   loadPlanner();
 };
 
+
 async function loadPlanner(){
+
   taskList.innerHTML="";
-  const snap=await getDocs(collection(db,"users",currentUser.uid,"planner"));
+
+  const snap = await getDocs(
+    collection(db,"users",currentUser.uid,"planner")
+  );
+
   snap.forEach(d=>{
+
+    const data=d.data();
+
     const li=document.createElement("li");
-    li.innerText=d.data().text;
+
+    // checkbox
+    const check=document.createElement("input");
+    check.type="checkbox";
+    check.checked=data.done;
+
+    check.onchange=()=>updateDoc(
+      doc(db,"users",currentUser.uid,"planner",d.id),
+      {done:check.checked}
+    );
+
+
+    // text
+    const span=document.createElement("span");
+    span.innerText=` ${data.text} (${data.priority}) `;
+
+    if(data.priority==="Low") span.style.color="green";
+    if(data.priority==="Medium") span.style.color="orange";
+    if(data.priority==="High") span.style.color="red";
+
+    if(data.done) span.style.textDecoration="line-through";
+
+
+    // EDIT
+    const edit=document.createElement("button");
+    edit.innerText="Edit";
+
+    edit.onclick=()=>{
+      editTaskId=d.id;
+      taskInput.value=data.text;
+      priority.value=data.priority;
+      taskBtn.innerText="Update Task";
+    };
+
+
+    // DELETE
+    const del=document.createElement("button");
+    del.innerText="Delete";
+
+    del.onclick=()=>{
+      deleteDoc(doc(db,"users",currentUser.uid,"planner",d.id))
+        .then(loadPlanner);
+    };
+
+    li.append(check,span,edit,del);
     taskList.appendChild(li);
   });
 }
 
-
-
 // =====================================================
-// 📊 CGPA
+// 📊 CGPA (FULL CRUD)
 // =====================================================
 
-const gradeMap={O:10,"A+":9,A:8,"B+":7,B:6,C:5};
+let editCgpaId = null;
 
-addSubBtn.onclick=async()=>{
-  await addDoc(collection(db,"users",currentUser.uid,"cgpa"),{
-    subject:subName.value,
-    credits:Number(credits.value),
-    grade:grade.value
-  });
+const gradeMap = { O:10,"A+":9,A:8,"B+":7,B:6,C:5 };
+
+addSubBtn.onclick = async () => {
+
+  const subject = subName.value.trim();
+  const credit  = Number(credits.value);
+  const grd     = grade.value;
+
+  if(!subject || !credit || !grd) return;
+
+  // EDIT
+  if(editCgpaId){
+
+    await updateDoc(
+      doc(db,"users",currentUser.uid,"cgpa",editCgpaId),
+      {
+        subject,
+        credits:credit,
+        grade:grd
+      }
+    );
+
+    editCgpaId=null;
+  }
+
+  // ADD
+  else{
+
+    await addDoc(
+      collection(db,"users",currentUser.uid,"cgpa"),
+      {
+        subject,
+        credits:credit,
+        grade:grd
+      }
+    );
+  }
+
+  subName.value="";
+  credits.value="";
+  grade.value="";
+
   loadCGPA();
 };
+
 
 async function loadCGPA(){
 
   cgpaList.innerHTML="";
+
   let total=0, creditSum=0;
 
-  const snap=await getDocs(collection(db,"users",currentUser.uid,"cgpa"));
+  const snap=await getDocs(
+    collection(db,"users",currentUser.uid,"cgpa")
+  );
 
   snap.forEach(d=>{
+
     const data=d.data();
+
     total+=gradeMap[data.grade]*data.credits;
     creditSum+=data.credits;
 
     const li=document.createElement("li");
-    li.innerText=`${data.subject} - ${data.credits} - ${data.grade}`;
+
+    li.innerText =
+      `${data.subject} - ${data.credits}cr - ${data.grade} `;
+
+    // EDIT
+    const edit=document.createElement("button");
+    edit.innerText="Edit";
+
+    edit.onclick=()=>{
+      editCgpaId=d.id;
+      subName.value=data.subject;
+      credits.value=data.credits;
+      grade.value=data.grade;
+    };
+
+
+    // DELETE
+    const del=document.createElement("button");
+    del.innerText="Delete";
+
+    del.onclick=()=>{
+      deleteDoc(doc(db,"users",currentUser.uid,"cgpa",d.id))
+        .then(loadCGPA);
+    };
+
+    li.append(edit,del);
     cgpaList.appendChild(li);
   });
 
-  cgpaResult.innerText="CGPA: "+(creditSum?(total/creditSum).toFixed(2):0);
+  cgpaResult.innerText =
+    "CGPA: " + (creditSum ? (total/creditSum).toFixed(2) : 0);
 }
