@@ -156,33 +156,98 @@ addBtn.onclick = async () => {
 
 async function loadSchedule(){
 
-  list.innerHTML="";
-
-  const snap=await getDocs(collection(db,"users",currentUser.uid,"schedule"));
-
-  snap.forEach(d=>{
-    const data=d.data();
-
+    list.innerHTML = "";
+  
+    const snap = await getDocs(
+      collection(db,"users",currentUser.uid,"schedule")
+    );
+  
+    const tasks = [];
+  
+    snap.forEach(d=>{
+      const data = d.data();
+  
+      tasks.push({
+        id: d.id,
+        title: data.title,
+        time: data.time,
+        days: data.days || ["Others"] // ⭐ SAFE DEFAULT
+      });
+    });
+  
+  
+    const week = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  
+    const todayIndex = new Date().getDay();
+  
+    const orderedWeek = [
+      ...week.slice(todayIndex),
+      ...week.slice(0,todayIndex)
+    ];
+  
+  
+    const used = new Set();
+  
+  
+    // ===== WEEK TASKS =====
+    orderedWeek.forEach(day=>{
+  
+      const dayTasks = tasks.filter(t => t.days.includes(day));
+  
+      if(!dayTasks.length) return;
+  
+      const heading=document.createElement("h4");
+      heading.innerText=day;
+  
+      if(day === week[todayIndex])
+        heading.style.color="dodgerblue";
+  
+      list.appendChild(heading);
+  
+      dayTasks.forEach(data=>{
+        used.add(data.id);
+        renderScheduleItem(data);
+      });
+    });
+  
+  
+    // ===== OTHERS =====
+    const others = tasks.filter(t=>!used.has(t.id));
+  
+    if(others.length){
+  
+      const heading=document.createElement("h4");
+      heading.innerText="Others";
+      list.appendChild(heading);
+  
+      others.forEach(renderScheduleItem);
+    }
+  }
+  
+  
+  // reusable item renderer
+  function renderScheduleItem(data){
+  
     const li=document.createElement("li");
-    li.innerText=`${data.title} - ${data.time} (${data.days.join(", ")}) `;
-
+    li.innerText=`${data.title} - ${data.time} `;
+  
     const edit=document.createElement("button");
     edit.innerText="Edit";
     edit.onclick=()=>{
-      editId=d.id;
+      editId=data.id;
       titleInput.value=data.title;
       timeInput.value=data.time;
       addBtn.innerText="Update";
     };
-
+  
     const del=document.createElement("button");
     del.innerText="Delete";
-    del.onclick=()=>deleteDoc(doc(db,"users",currentUser.uid,"schedule",d.id)).then(loadSchedule);
-
+    del.onclick=()=>deleteDoc(doc(db,"users",currentUser.uid,"schedule",data.id)).then(loadSchedule);
+  
     li.append(edit,del);
     list.appendChild(li);
-  });
-}
+  }
+  
 
 
 
