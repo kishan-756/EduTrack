@@ -132,32 +132,92 @@ addBtn.onclick=async()=>{
   if(editScheduleId){
     await updateDoc(doc(db,"users",currentUser.uid,"schedule",editScheduleId),data);
     editScheduleId=null;
+    addBtn.innerText="Add";
   } else {
     await addDoc(collection(db,"users",currentUser.uid,"schedule"),data);
   }
 
   titleInput.value="";
   timeInput.value="";
+  document.querySelectorAll("#scheduleSection input[type=checkbox]").forEach(cb=>cb.checked=false);
   loadSchedule();
 };
+
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function getWeekOrderFromToday(){
+  const today = new Date().getDay();
+  return DAYS.slice(today).concat(DAYS.slice(0,today));
+}
+
+function scheduleSortKey(data){
+  const days = Array.isArray(data.days) ? data.days : ["One-time"];
+  if(days.includes("One-time")) return { rank: 0, time: data.time || "00:00", heading: "One-time" };
+  const weekOrder = getWeekOrderFromToday();
+  let rank = 7;
+  for(const d of days){
+    const i = weekOrder.indexOf(d);
+    if(i !== -1 && i < rank) rank = i;
+  }
+  const labels = ["Today", "Tomorrow"];
+  const heading = rank < 2 ? labels[rank] : (weekOrder[rank] || "");
+  return { rank, time: data.time || "00:00", heading };
+}
 
 async function loadSchedule(){
 
   list.innerHTML="";
 
   const snap=await getDocs(collection(db,"users",currentUser.uid,"schedule"));
+  const weekOrder = getWeekOrderFromToday();
 
-  snap.forEach(d=>{
-    const data=d.data();
+  const items = snap.docs.map(d=>({ id: d.id, ...d.data() }));
+  items.sort((a,b)=>{
+    const ka = scheduleSortKey(a), kb = scheduleSortKey(b);
+    if(ka.rank !== kb.rank) return ka.rank - kb.rank;
+    return (a.time||"00:00").localeCompare(b.time||"00:00");
+  });
+
+  let lastHeading = null;
+  items.forEach(({ id, ...data })=>{
+    const heading = scheduleSortKey(data).heading;
+    if(heading !== lastHeading){
+      lastHeading = heading;
+      const headLi = document.createElement("li");
+      headLi.className = "schedule-day-heading";
+      headLi.textContent = heading;
+      list.appendChild(headLi);
+    }
+
+    const daysStr = Array.isArray(data.days) ? data.days.join(", ") : (data.days || "One-time");
 
     const li=document.createElement("li");
-    li.innerText=`${data.title} - ${data.time}`;
+    li.innerText=`${data.title} - ${data.time} (${daysStr})`;
 
-    const del=document.createElement("button");
-    del.innerText="Delete";
-    del.onclick=()=>deleteDoc(doc(db,"users",currentUser.uid,"schedule",d.id)).then(loadSchedule);
+    const editBtn=document.createElement("button");
+    editBtn.innerText="Edit";
+    editBtn.style.marginLeft="8px";
+    editBtn.onclick=()=>{
+      editScheduleId=id;
+      titleInput.value=data.title;
+      timeInput.value=data.time||"";
+      document.querySelectorAll("#scheduleSection input[type=checkbox]").forEach(cb=>{
+        cb.checked=Array.isArray(data.days)&&data.days.includes(cb.value);
+      });
+      addBtn.innerText="Update";
+      titleInput.focus();
+    };
 
-    li.append(del);
+    const delBtn=document.createElement("button");
+    delBtn.innerText="Delete";
+    delBtn.style.marginLeft="4px";
+    delBtn.onclick=async()=>{
+      await deleteDoc(doc(db,"users",currentUser.uid,"schedule",id));
+      if(editScheduleId===id){ editScheduleId=null; addBtn.innerText="Add"; titleInput.value=""; timeInput.value=""; }
+      loadSchedule();
+    };
+
+    li.append(editBtn,delBtn);
     list.appendChild(li);
   });
 }
@@ -182,8 +242,9 @@ taskBtn.onclick=async()=>{
   };
 
   if(editTaskId){
-    await updateDoc(doc(db,"users",currentUser.uid,"planner",editTaskId),data);
+    await updateDoc(doc(db,"users",currentUser.uid,"planner",editTaskId),{text:data.text,priority:data.priority});
     editTaskId=null;
+    taskBtn.innerText="Add Task";
   } else {
     await addDoc(collection(db,"users",currentUser.uid,"planner"),data);
   }
@@ -231,7 +292,27 @@ async function loadPlanner(){
 
     span.appendChild(badge);
 
-    li.append(check,span);
+    const editBtn=document.createElement("button");
+    editBtn.innerText="Edit";
+    editBtn.style.marginLeft="8px";
+    editBtn.onclick=()=>{
+      editTaskId=d.id;
+      taskInput.value=data.text;
+      priority.value=data.priority;
+      taskBtn.innerText="Update Task";
+      taskInput.focus();
+    };
+
+    const delBtn=document.createElement("button");
+    delBtn.innerText="Delete";
+    delBtn.style.marginLeft="4px";
+    delBtn.onclick=async()=>{
+      await deleteDoc(doc(db,"users",currentUser.uid,"planner",d.id));
+      if(editTaskId===d.id){ editTaskId=null; taskBtn.innerText="Add Task"; taskInput.value=""; }
+      loadPlanner();
+    };
+
+    li.append(check,span,editBtn,delBtn);
     taskList.appendChild(li);
   });
 }
