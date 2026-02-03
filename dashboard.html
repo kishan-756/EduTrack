@@ -1,196 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>EduTrack</title>
+  <title>EduTrack Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<style>
-    .form-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin:8px 0;
-}
+  <style>
+  body{
+    font-family:Arial;
+    margin:0;
+    transition:0.3s;
+  }
 
-.form-row label{
-  width:80px;
-  font-weight:600;
-}
+  body.dark{
+    background:#121212;
+    color:white;
+  }
 
-:root{
-  --bg:#fff;
-  --text:#111;
-  --nav:#222;
-  --card:#f2f2f2;
-}
+  nav{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    background:#222;
+    flex-wrap:wrap;
+  }
 
-body.dark{
-  --bg:#121212;
-  --text:#eee;
-  --nav:#1f1f1f;
-  --card:#1b1b1b;
-}
+  nav button{
+    color:white;
+    background:none;
+    border:none;
+    cursor:pointer;
+  }
 
-body{
-  margin:0;
-  font-family:Arial;
-  background:var(--bg);
-  color:var(--text);
-  transition:.3s;
-}
+  .section{
+    display:none;
+    padding:20px;
+  }
 
-/* sections */
-.section{
-  display:none;
-  padding:20px;
-  padding-bottom:90px;
-}
+  .active{
+    display:block;
+  }
 
-.active{ display:block; }
+  li{
+    margin:8px 0;
+  }
 
-input,select{
-  background:var(--card);
-  color:var(--text);
-  border:1px solid #555;
-  padding:6px;
-  margin:5px;
-}
-
-li{
-  background:var(--card);
-  margin:6px 0;
-  padding:6px;
-  border-radius:6px;
-}
-
-/* navbar */
-nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:var(--nav);
-  display:flex;
-  justify-content:space-around;
-  padding:10px 0;
-}
-
-nav button{
-  background:none;
-  border:none;
+  canvas{
+    margin-top:20px;
+  }
+  .badge{
+  padding:2px 8px;
+  border-radius:8px;
+  font-size:12px;
+  margin-left:8px;
   color:white;
-  cursor:pointer;
 }
 
-/* desktop nav top */
-@media(min-width:768px){
+.low{background:#2ecc71;}
+.medium{background:#f39c12;}
+.high{background:#e74c3c;}
 
-nav{
-  position:fixed;
-  top:0;
-  bottom:auto;
-  height:60px;
-}
-
-/* push ALL content below navbar */
-body{
-  padding-top:70px;
-}
-
-.section{
-  padding-bottom:20px;
-}
-}
-@media(max-width:600px){
-  .form-row{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .form-row label{
-    width:auto;
-  }
-}
-
-
-</style>
+  </style>
 </head>
 
 <body>
 
-<p id="user" style="padding:10px"></p>
-
-<div id="scheduleSection" class="section active">
-
-    <h3>Schedule</h3>
-    
-    <input id="title" placeholder="Activity">
-    
-    <div style="margin:6px 0">
-      <label><input type="checkbox" value="Sun">Sun</label>
-      <label><input type="checkbox" value="Mon">Mon</label>
-      <label><input type="checkbox" value="Tue">Tue</label>
-      <label><input type="checkbox" value="Wed">Wed</label>
-      <label><input type="checkbox" value="Thu">Thu</label>
-      <label><input type="checkbox" value="Fri">Fri</label>
-      <label><input type="checkbox" value="Sat">Sat</label>
-    </div>
-    
-    <input id="time" type="time">
-    
-    <button id="addBtn">Add</button>
-    
-    <ul id="list"></ul>
-    
-    </div>
-    
-<!-- planner -->
-<div id="plannerSection" class="section">
-<h3>Planner</h3>
-<input id="taskInput">
-<select id="priority">
-<option>Low</option>
-<option>Medium</option>
-<option>High</option>
-</select>
-<button id="taskBtn">Add</button>
-<ul id="taskList"></ul>
-</div>
-
-<!-- cgpa -->
-<div id="cgpaSection" class="section">
-
-    <h3>CGPA Calculator</h3>
-    
-    <div class="form-row">
-      <label>Subject</label>
-      <input id="subName" placeholder="Eg: Maths">
-    </div>
-    
-    <div class="form-row">
-      <label>Credits</label>
-      <input id="credits" type="number" placeholder="Eg: 4">
-    </div>
-    
-    <div class="form-row">
-      <label>Grade</label>
-      <input id="grade" placeholder="Eg: A+">
-    </div>
-    
-    <button id="addSubBtn">Add Subject</button>
-    
-    <ul id="cgpaList"></ul>
-    <h3 id="cgpaResult">CGPA: 0</h3>
-    
-    </div>
-    
-
+<!-- NAV -->
 <nav>
-<button id="themeToggle">☾</button>
-<button id="scheduleTab">Schedule</button>
-<button id="plannerTab">Planner</button>
-<button id="cgpaTab">CGPA</button>
-<button id="logoutBtn">Logout</button>
+  <button id="scheduleTab">Schedule</button>
+  <button id="plannerTab">Planner</button>
+  <button id="cgpaTab">CGPA</button>
+  <button id="themeToggle">☾</button>
+  <button id="logoutBtn">Logout</button>
 </nav>
 
+<p id="user" style="padding:10px"></p>
+
+
+<!-- ================= SCHEDULE ================= -->
+<div id="scheduleSection" class="section active">
+
+  <h3>Add Schedule</h3>
+
+  <input id="title" placeholder="Event">
+  <input id="time" type="time">
+
+  <div>
+    <label><input type="checkbox" value="Sun">Sun</label>
+    <label><input type="checkbox" value="Mon">Mon</label>
+    <label><input type="checkbox" value="Tue">Tue</label>
+    <label><input type="checkbox" value="Wed">Wed</label>
+    <label><input type="checkbox" value="Thu">Thu</label>
+    <label><input type="checkbox" value="Fri">Fri</label>
+    <label><input type="checkbox" value="Sat">Sat</label>
+  </div>
+
+  <button id="addBtn">Add</button>
+
+  <ul id="list"></ul>
+</div>
+
+
+
+<!-- ================= PLANNER ================= -->
+<div id="plannerSection" class="section">
+
+  <h3>Planner</h3>
+
+  <input id="taskInput" placeholder="Task">
+
+  <select id="priority">
+    <option>Low</option>
+    <option>Medium</option>
+    <option>High</option>
+  </select>
+
+  <button id="taskBtn">Add Task</button>
+
+  <ul id="taskList"></ul>
+</div>
+
+
+
+<!-- ================= CGPA ================= -->
+<div id="cgpaSection" class="section">
+
+  <h3>CGPA Calculator</h3>
+
+  <!-- ⭐ semester selector -->
+  <select id="semester">
+    <option value="1">Semester 1</option>
+    <option value="2">Semester 2</option>
+    <option value="3">Semester 3</option>
+    <option value="4">Semester 4</option>
+    <option value="5">Semester 5</option>
+    <option value="6">Semester 6</option>
+    <option value="7">Semester 7</option>
+    <option value="8">Semester 8</option>
+  </select>
+
+  <br><br>
+
+  <input id="subName" placeholder="Subject">
+  <input id="credits" type="number" placeholder="Credits">
+  <input id="grade" placeholder="Grade (O/A+/A/B+)">
+
+  <button id="addSubBtn">Add Subject</button>
+
+  <ul id="cgpaList"></ul>
+
+  <h3 id="cgpaResult">CGPA: 0</h3>
+
+  <!-- ⭐ chart -->
+  <canvas id="gpaChart" height="120"></canvas><h3 id="overallCgpa">Overall CGPA: 0</h3>
+  <canvas id="gpaChart" height="120"></canvas>
+  <ul id="cgpaList"></ul>
+  
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="./js/dashboard.js"></script>
+
 </body>
 </html>
