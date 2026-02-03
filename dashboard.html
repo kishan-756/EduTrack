@@ -1,115 +1,196 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>EduTrack Dashboard</title>
+<title>EduTrack</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      background: #f5f5f5;
-    }
+<style>
+    .form-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:8px 0;
+}
 
-    nav {
-      background: #222;
-      padding: 12px;
-      display: flex;
-      gap: 15px;
-    }
+.form-row label{
+  width:80px;
+  font-weight:600;
+}
 
-    nav button {
-      color: white;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
+:root{
+  --bg:#fff;
+  --text:#111;
+  --nav:#222;
+  --card:#f2f2f2;
+}
 
-    .section {
-      display: none;
-      padding: 20px;
-    }
+body.dark{
+  --bg:#121212;
+  --text:#eee;
+  --nav:#1f1f1f;
+  --card:#1b1b1b;
+}
 
-    .active {
-      display: block;
-    }
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
+  transition:.3s;
+}
 
-    input, select {
-      margin: 5px;
-      padding: 6px;
-    }
-  </style>
+/* sections */
+.section{
+  display:none;
+  padding:20px;
+  padding-bottom:90px;
+}
+
+.active{ display:block; }
+
+input,select{
+  background:var(--card);
+  color:var(--text);
+  border:1px solid #555;
+  padding:6px;
+  margin:5px;
+}
+
+li{
+  background:var(--card);
+  margin:6px 0;
+  padding:6px;
+  border-radius:6px;
+}
+
+/* navbar */
+nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:var(--nav);
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0;
+}
+
+nav button{
+  background:none;
+  border:none;
+  color:white;
+  cursor:pointer;
+}
+
+/* desktop nav top */
+@media(min-width:768px){
+
+nav{
+  position:fixed;
+  top:0;
+  bottom:auto;
+  height:60px;
+}
+
+/* push ALL content below navbar */
+body{
+  padding-top:70px;
+}
+
+.section{
+  padding-bottom:20px;
+}
+}
+@media(max-width:600px){
+  .form-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .form-row label{
+    width:auto;
+  }
+}
+
+
+</style>
 </head>
 
 <body>
 
-<nav>
-  <button id="scheduleTab">Schedule</button>
-  <button id="plannerTab">Planner</button>
-  <button id="cgpaTab">CGPA</button>
-  <button id="logoutBtn">Logout</button>
-</nav>
-
 <p id="user" style="padding:10px"></p>
 
+<div id="scheduleSection" class="section active">
 
-<!-- SCHEDULE -->
-<div id="scheduleSection" class="section">
-  <h3>Scheduler</h3>
-
-  <input id="title" placeholder="Activity">
-
-  <div>
-    <label><input type="checkbox" value="Sunday">Sun</label>
-    <label><input type="checkbox" value="Monday">Mon</label>
-    <label><input type="checkbox" value="Tuesday">Tue</label>
-    <label><input type="checkbox" value="Wednesday">Wed</label>
-    <label><input type="checkbox" value="Thursday">Thu</label>
-    <label><input type="checkbox" value="Friday">Fri</label>
-    <label><input type="checkbox" value="Saturday">Sat</label>
-  </div>
-
-  <input id="time" type="time">
-  <button id="addBtn">Add</button>
-
-  <ul id="list"></ul>
-</div>
-
-
-<!-- PLANNER -->
+    <h3>Schedule</h3>
+    
+    <input id="title" placeholder="Activity">
+    
+    <div style="margin:6px 0">
+      <label><input type="checkbox" value="Sun">Sun</label>
+      <label><input type="checkbox" value="Mon">Mon</label>
+      <label><input type="checkbox" value="Tue">Tue</label>
+      <label><input type="checkbox" value="Wed">Wed</label>
+      <label><input type="checkbox" value="Thu">Thu</label>
+      <label><input type="checkbox" value="Fri">Fri</label>
+      <label><input type="checkbox" value="Sat">Sat</label>
+    </div>
+    
+    <input id="time" type="time">
+    
+    <button id="addBtn">Add</button>
+    
+    <ul id="list"></ul>
+    
+    </div>
+    
+<!-- planner -->
 <div id="plannerSection" class="section">
-
-  <h3>Planner</h3>
-
-  <input id="taskInput" placeholder="Task">
-  <select id="priority">
-    <option>Low</option>
-    <option>Medium</option>
-    <option>High</option>
-  </select>
-
-  <button id="taskBtn">Add Task</button>
-
-  <ul id="taskList"></ul>
+<h3>Planner</h3>
+<input id="taskInput">
+<select id="priority">
+<option>Low</option>
+<option>Medium</option>
+<option>High</option>
+</select>
+<button id="taskBtn">Add</button>
+<ul id="taskList"></ul>
 </div>
 
-
-<!-- CGPA -->
+<!-- cgpa -->
 <div id="cgpaSection" class="section">
 
-  <h3>CGPA</h3>
+    <h3>CGPA Calculator</h3>
+    
+    <div class="form-row">
+      <label>Subject</label>
+      <input id="subName" placeholder="Eg: Maths">
+    </div>
+    
+    <div class="form-row">
+      <label>Credits</label>
+      <input id="credits" type="number" placeholder="Eg: 4">
+    </div>
+    
+    <div class="form-row">
+      <label>Grade</label>
+      <input id="grade" placeholder="Eg: A+">
+    </div>
+    
+    <button id="addSubBtn">Add Subject</button>
+    
+    <ul id="cgpaList"></ul>
+    <h3 id="cgpaResult">CGPA: 0</h3>
+    
+    </div>
+    
 
-  <input id="subName" placeholder="Subject">
-  <input id="credits" type="number" placeholder="Credits">
-  <input id="grade" placeholder="Grade">
-
-  <button id="addSubBtn">Add</button>
-
-  <ul id="cgpaList"></ul>
-  <h3 id="cgpaResult">CGPA: 0</h3>
-</div>
-
+<nav>
+<button id="themeToggle">☾</button>
+<button id="scheduleTab">Schedule</button>
+<button id="plannerTab">Planner</button>
+<button id="cgpaTab">CGPA</button>
+<button id="logoutBtn">Logout</button>
+</nav>
 
 <script type="module" src="./js/dashboard.js"></script>
-
 </body>
 </html>

@@ -1,3 +1,7 @@
+// =====================================================
+// ✅ IMPORTS MUST BE FIRST
+// =====================================================
+
 import { auth, db } from "../firebase.js";
 
 import {
@@ -6,139 +10,176 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-  doc
+  collection, addDoc, getDocs,
+  deleteDoc, updateDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 
-// ================= ELEMENTS =================
-const userText = document.getElementById("user");
-const logoutBtn = document.getElementById("logoutBtn");
+// =====================================================
+// ✅ DOM ELEMENTS (DECLARE ONLY ONCE)
+// =====================================================
 
-const scheduleTab = document.getElementById("scheduleTab");
-const plannerTab = document.getElementById("plannerTab");
-const cgpaTab = document.getElementById("cgpaTab");
-
+// sections
 const scheduleSection = document.getElementById("scheduleSection");
-const plannerSection = document.getElementById("plannerSection");
-const cgpaSection = document.getElementById("cgpaSection");
+const plannerSection  = document.getElementById("plannerSection");
+const cgpaSection     = document.getElementById("cgpaSection");
+
+// nav
+const scheduleTab = document.getElementById("scheduleTab");
+const plannerTab  = document.getElementById("plannerTab");
+const cgpaTab     = document.getElementById("cgpaTab");
+const logoutBtn   = document.getElementById("logoutBtn");
+const themeBtn    = document.getElementById("themeToggle");
+
+// schedule
+const titleInput = document.getElementById("title");
+const timeInput  = document.getElementById("time");
+const addBtn     = document.getElementById("addBtn");
+const list       = document.getElementById("list");
+
+// planner
+const taskInput = document.getElementById("taskInput");
+const taskBtn   = document.getElementById("taskBtn");
+const taskList  = document.getElementById("taskList");
+const priority  = document.getElementById("priority");
+
+// cgpa
+const subName   = document.getElementById("subName");
+const credits   = document.getElementById("credits");
+const grade     = document.getElementById("grade");
+const addSubBtn = document.getElementById("addSubBtn");
+const cgpaList  = document.getElementById("cgpaList");
+const cgpaResult= document.getElementById("cgpaResult");
+
+const userText  = document.getElementById("user");
 
 let currentUser;
 
 
 // =====================================================
-// ================= TAB SYSTEM (FIXED) =================
+// 🌗 THEME
 // =====================================================
 
-function showSection(sectionName) {
-
-  const sections = {
-    schedule: scheduleSection,
-    planner: plannerSection,
-    cgpa: cgpaSection
-  };
-
-  Object.values(sections).forEach(s => s.classList.remove("active"));
-
-  sections[sectionName].classList.add("active");
-
-  localStorage.setItem("lastTab", sectionName);
+function setTheme(mode){
+  document.body.classList.toggle("dark", mode==="dark");
+  themeBtn.innerText = mode==="dark" ? "☀︎" : "☾";
+  localStorage.setItem("theme", mode);
 }
 
-// restore last opened tab
-const lastTab = localStorage.getItem("lastTab") || "schedule";
-showSection(lastTab);
+const saved = localStorage.getItem("theme");
+if(saved) setTheme(saved);
+else if(window.matchMedia('(prefers-color-scheme: dark)').matches)
+  setTheme("dark");
 
-scheduleTab.onclick = () => showSection("schedule");
-plannerTab.onclick = () => showSection("planner");
-cgpaTab.onclick = () => showSection("cgpa");
+themeBtn.onclick = ()=>{
+  const dark = document.body.classList.contains("dark");
+  setTheme(dark ? "light" : "dark");
+};
 
 
 // =====================================================
-// ================= AUTH =================
+// 📌 NAVIGATION
 // =====================================================
 
-onAuthStateChanged(auth, (user) => {
+const sections = {
+  schedule: scheduleSection,
+  planner: plannerSection,
+  cgpa: cgpaSection
+};
 
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
+function show(name){
+  Object.values(sections).forEach(s => s.classList.remove("active"));
+  sections[name].classList.add("active");
+}
+
+scheduleTab.onclick = () => show("schedule");
+plannerTab.onclick  = () => show("planner");
+cgpaTab.onclick     = () => show("cgpa");
+
+
+// =====================================================
+// 🔐 AUTH
+// =====================================================
+
+onAuthStateChanged(auth,(user)=>{
+  if(!user) location.href="index.html";
 
   currentUser = user;
-  userText.innerText = "Logged in: " + user.email;
+  userText.innerText = user.email;
 
-  // 🔥 load everything only AFTER auth
   loadSchedule();
   loadPlanner();
   loadCGPA();
 });
 
-logoutBtn.onclick = () => signOut(auth);
+logoutBtn.onclick = ()=>signOut(auth);
 
 
 
 // =====================================================
-// ================= SCHEDULE =================
+// 📅 SCHEDULE (FINAL WORKING)
 // =====================================================
 
-const title = document.getElementById("title");
-const time = document.getElementById("time");
-const addBtn = document.getElementById("addBtn");
-const list = document.getElementById("list");
-
-const dayCheckboxes =
-  document.querySelectorAll("#scheduleSection input[type=checkbox]");
+let editId = null;
 
 addBtn.onclick = async () => {
 
+  const checkboxes =
+    document.querySelectorAll("#scheduleSection input[type=checkbox]");
+
   const days = [];
-  dayCheckboxes.forEach(cb => cb.checked && days.push(cb.value));
+  checkboxes.forEach(cb => cb.checked && days.push(cb.value));
 
-  if (!title.value || !time.value || !days.length) return;
+  if(days.length === 0) days.push("One-time");
 
-  for (let d of days) {
-    await addDoc(
-      collection(db, "users", currentUser.uid, "schedule"),
-      { title: title.value, day: d, time: time.value }
-    );
+  const title = titleInput.value.trim();
+  const time  = timeInput.value;
+
+  if(!title || !time) return;
+
+  if(editId){
+    await updateDoc(doc(db,"users",currentUser.uid,"schedule",editId),
+      {title,time,days});
+    editId=null;
+    addBtn.innerText="Add";
+  }
+  else{
+    await addDoc(collection(db,"users",currentUser.uid,"schedule"),
+      {title,time,days});
   }
 
-  title.value = "";
-  time.value = "";
-  dayCheckboxes.forEach(cb => cb.checked = false);
-
+  titleInput.value="";
+  timeInput.value="";
   loadSchedule();
 };
 
 
-async function loadSchedule() {
+async function loadSchedule(){
 
-  list.innerHTML = "";
+  list.innerHTML="";
 
-  const snap = await getDocs(
-    collection(db, "users", currentUser.uid, "schedule")
-  );
+  const snap=await getDocs(collection(db,"users",currentUser.uid,"schedule"));
 
-  snap.forEach(d => {
-    const data = d.data();
+  snap.forEach(d=>{
+    const data=d.data();
 
-    const li = document.createElement("li");
-    li.innerText = `${data.title} - ${data.day} - ${data.time} `;
+    const li=document.createElement("li");
+    li.innerText=`${data.title} - ${data.time} (${data.days.join(", ")}) `;
 
-    const del = document.createElement("button");
-    del.innerText = "Delete";
-
-    del.onclick = async () => {
-      await deleteDoc(doc(db, "users", currentUser.uid, "schedule", d.id));
-      loadSchedule();
+    const edit=document.createElement("button");
+    edit.innerText="Edit";
+    edit.onclick=()=>{
+      editId=d.id;
+      titleInput.value=data.title;
+      timeInput.value=data.time;
+      addBtn.innerText="Update";
     };
 
-    li.append(del);
+    const del=document.createElement("button");
+    del.innerText="Delete";
+    del.onclick=()=>deleteDoc(doc(db,"users",currentUser.uid,"schedule",d.id)).then(loadSchedule);
+
+    li.append(edit,del);
     list.appendChild(li);
   });
 }
@@ -146,58 +187,28 @@ async function loadSchedule() {
 
 
 // =====================================================
-// ================= PLANNER =================
+// 📝 PLANNER (same logic)
 // =====================================================
 
-const taskInput = document.getElementById("taskInput");
-const taskBtn = document.getElementById("taskBtn");
-const taskList = document.getElementById("taskList");
-const prioritySelect = document.getElementById("priority");
+taskBtn.onclick=async()=>{
+  if(!taskInput.value) return;
 
-taskBtn.onclick = async () => {
+  await addDoc(collection(db,"users",currentUser.uid,"planner"),{
+    text:taskInput.value,
+    priority:priority.value,
+    done:false
+  });
 
-  if (!taskInput.value) return;
-
-  await addDoc(
-    collection(db, "users", currentUser.uid, "planner"),
-    {
-      text: taskInput.value,
-      priority: prioritySelect.value,
-      done: false
-    }
-  );
-
-  taskInput.value = "";
+  taskInput.value="";
   loadPlanner();
 };
 
-
-async function loadPlanner() {
-
-  taskList.innerHTML = "";
-
-  const snap = await getDocs(
-    collection(db, "users", currentUser.uid, "planner")
-  );
-
-  snap.forEach(d => {
-
-    const data = d.data();
-
-    const li = document.createElement("li");
-
-    const check = document.createElement("input");
-    check.type = "checkbox";
-    check.checked = data.done;
-
-    check.onchange = async () => {
-      await updateDoc(
-        doc(db, "users", currentUser.uid, "planner", d.id),
-        { done: check.checked }
-      );
-    };
-
-    li.append(check, document.createTextNode(` ${data.text}`));
+async function loadPlanner(){
+  taskList.innerHTML="";
+  const snap=await getDocs(collection(db,"users",currentUser.uid,"planner"));
+  snap.forEach(d=>{
+    const li=document.createElement("li");
+    li.innerText=d.data().text;
     taskList.appendChild(li);
   });
 }
@@ -205,55 +216,36 @@ async function loadPlanner() {
 
 
 // =====================================================
-// ================= CGPA =================
+// 📊 CGPA
 // =====================================================
 
-const subName = document.getElementById("subName");
-const credits = document.getElementById("credits");
-const grade = document.getElementById("grade");
-const addSubBtn = document.getElementById("addSubBtn");
-const cgpaList = document.getElementById("cgpaList");
-const cgpaResult = document.getElementById("cgpaResult");
+const gradeMap={O:10,"A+":9,A:8,"B+":7,B:6,C:5};
 
-const gradeMap = { O:10, "A+":9, A:8, "B+":7, B:6, C:5 };
-
-addSubBtn.onclick = async () => {
-
-  await addDoc(
-    collection(db, "users", currentUser.uid, "cgpa"),
-    {
-      subject: subName.value,
-      credits: Number(credits.value),
-      grade: grade.value.toUpperCase()
-    }
-  );
-
+addSubBtn.onclick=async()=>{
+  await addDoc(collection(db,"users",currentUser.uid,"cgpa"),{
+    subject:subName.value,
+    credits:Number(credits.value),
+    grade:grade.value
+  });
   loadCGPA();
 };
 
+async function loadCGPA(){
 
-async function loadCGPA() {
+  cgpaList.innerHTML="";
+  let total=0, creditSum=0;
 
-  cgpaList.innerHTML = "";
+  const snap=await getDocs(collection(db,"users",currentUser.uid,"cgpa"));
 
-  let total = 0, creditSum = 0;
+  snap.forEach(d=>{
+    const data=d.data();
+    total+=gradeMap[data.grade]*data.credits;
+    creditSum+=data.credits;
 
-  const snap = await getDocs(
-    collection(db, "users", currentUser.uid, "cgpa")
-  );
-
-  snap.forEach(d => {
-
-    const data = d.data();
-
-    total += gradeMap[data.grade] * data.credits;
-    creditSum += data.credits;
-
-    const li = document.createElement("li");
-    li.innerText = `${data.subject} - ${data.credits} - ${data.grade}`;
+    const li=document.createElement("li");
+    li.innerText=`${data.subject} - ${data.credits} - ${data.grade}`;
     cgpaList.appendChild(li);
   });
 
-  cgpaResult.innerText =
-    "CGPA: " + (creditSum ? (total/creditSum).toFixed(2) : 0);
+  cgpaResult.innerText="CGPA: "+(creditSum?(total/creditSum).toFixed(2):0);
 }
