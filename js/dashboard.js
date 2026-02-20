@@ -88,6 +88,7 @@ const resetBtn = document.getElementById("resetTimer");
 const studyModeBtn = document.getElementById("studyMode");
 const breakModeBtn = document.getElementById("breakMode");
 const studyChartCanvas = document.getElementById("studyChart");
+const alarmSound = new Audio("https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav");
 
 let currentUser;
 let gpaChart = null;
@@ -520,8 +521,16 @@ startBtn.onclick = () => {
         clearInterval(timerInterval);
         isTimerRunning = false;
         startBtn.innerText = "Start";
-        alert(isStudyMode ? "Study session finished! Take a break." : "Break over! Back to work.");
-        if (isStudyMode) logStudyTime(25);
+
+        alarmSound.loop = true;
+        alarmSound.play();
+
+        setTimeout(() => {
+          alert(isStudyMode ? "Study session finished! Take a break." : "Break over! Back to work.");
+          alarmSound.pause();
+          alarmSound.currentTime = 0;
+          if (isStudyMode) logStudyTime(25);
+        }, 100);
       }
     }, 1000);
   }
