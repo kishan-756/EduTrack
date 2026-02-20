@@ -37,10 +37,6 @@ const addItemSection = document.getElementById("addItemSection");
 const createFolderBtn = document.getElementById("createFolderBtn");
 const saveItemBtn = document.getElementById("saveItemBtn");
 const cancelItemBtn = document.getElementById("cancelItemBtn");
-const resourceType = document.getElementById("resourceType");
-const linkInputGroup = document.getElementById("linkInputGroup");
-const fileInputGroup = document.getElementById("fileInputGroup");
-const fileInput = document.getElementById("fileInput");
 const resourceName = document.getElementById("resourceName");
 const resourceUrl = document.getElementById("resourceUrl");
 const folderBreadcrumb = document.getElementById("folderBreadcrumb");
@@ -602,11 +598,7 @@ async function loadStudyActivity() {
 // 📁 STORAGE LOGIC
 // =====================================================
 
-resourceType.onchange = () => {
-  const isFile = resourceType.value === "file";
-  fileInputGroup.style.display = isFile ? "block" : "none";
-  linkInputGroup.style.display = isFile ? "none" : "block";
-};
+// Storage view logic
 
 // --- Modal Helpers ---
 const openModal = (id = null, name = "") => {
@@ -800,46 +792,33 @@ async function loadItems() {
 }
 
 saveItemBtn.onclick = async () => {
-  const type = resourceType.value;
-  let name = resourceName.value;
-  let url = resourceUrl.value;
+  const name = resourceName.value.trim();
+  const url = resourceUrl.value.trim();
 
-  if (type === "file") {
-    const file = fileInput.files[0];
-    if (!file) return alert("Please select a file");
-    name = file.name;
+  if (!name || !url) return alert("Please enter both a name and a link.");
 
-    saveItemBtn.innerText = "Uploading...";
+  try {
+    saveItemBtn.innerText = "Adding...";
     saveItemBtn.disabled = true;
 
-    try {
-      const storageRef = ref(storage, `users/${currentUser.uid}/${currentFolderId}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      url = await getDownloadURL(storageRef);
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed. 💡 Tip: Try adding a Google Drive link as a 'Link' resource if your file is too large or failing to upload.");
-      saveItemBtn.innerText = "Save Resource";
-      saveItemBtn.disabled = false;
-      return;
-    }
-  } else {
-    if (!name || !url) return alert("Please fill all fields");
+    await addDoc(collection(db, "users", currentUser.uid, "folders", currentFolderId, "items"), {
+      name,
+      url,
+      type: "link",
+      createdAt: serverTimestamp()
+    });
+
+    resourceName.value = "";
+    resourceUrl.value = "";
+    saveItemBtn.innerText = "Save Resource";
+    saveItemBtn.disabled = false;
+    loadItems();
+  } catch (err) {
+    console.error("Save error:", err);
+    alert("Failed to save resource.");
+    saveItemBtn.innerText = "Save Resource";
+    saveItemBtn.disabled = false;
   }
-
-  await addDoc(collection(db, "users", currentUser.uid, "folders", currentFolderId, "items"), {
-    name,
-    url,
-    type,
-    createdAt: serverTimestamp()
-  });
-
-  resourceName.value = "";
-  resourceUrl.value = "";
-  fileInput.value = "";
-  saveItemBtn.innerText = "Save Resource";
-  saveItemBtn.disabled = false;
-  loadItems();
 };
 
 toggleAddItemBtn.onclick = () => {
