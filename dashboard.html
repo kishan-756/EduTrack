@@ -1,179 +1,200 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>EduTrack Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-  body{
-    font-family:Arial;
-    margin:0;
-    transition:0.3s;
-  }
+    body {
+      font-family: Arial;
+      margin: 0;
+      transition: 0.3s;
+    }
 
-  body.dark{
-    background:#121212;
-    color:white;
-  }
+    body.dark {
+      background: #121212;
+      color: white;
+    }
 
-  nav{
-    display:flex;
-    gap:10px;
-    padding:10px;
-    background:#222;
-    flex-wrap:wrap;
-  }
+    nav {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: #222;
+      flex-wrap: wrap;
+    }
 
-  nav button{
-    color:white;
-    background:none;
-    border:none;
-    cursor:pointer;
-  }
+    nav button {
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
 
-  .section{
-    display:none;
-    padding:20px;
-  }
+    .section {
+      display: none;
+      padding: 20px;
+    }
 
-  .active{
-    display:block;
-  }
+    .active {
+      display: block;
+    }
 
-  li{
-    margin:8px 0;
-  }
+    li {
+      margin: 8px 0;
+    }
 
-  canvas{
-    margin-top:20px;
-  }
-  .badge{
-  padding:2px 8px;
-  border-radius:8px;
-  font-size:12px;
-  margin-left:8px;
-  color:white;
-}
+    canvas {
+      margin-top: 20px;
+    }
 
-.low{background:#2ecc71;}
-.medium{background:#f39c12;}
-.high{background:#e74c3c;}
+    .badge {
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-left: 8px;
+      color: white;
+    }
 
+    .low {
+      background: #2ecc71;
+    }
+
+    .medium {
+      background: #f39c12;
+    }
+
+    .high {
+      background: #e74c3c;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- NAV -->
-<nav>
-  <button id="scheduleTab">Schedule</button>
-  <button id="plannerTab">Planner</button>
-  <button id="cgpaTab">CGPA</button>
-  <button id="themeToggle">☾</button>
-  <button id="logoutBtn">Logout</button>
-</nav>
+  <!-- NAV -->
+  <nav>
+    <button id="scheduleTab">Schedule</button>
+    <button id="plannerTab">Planner</button>
+    <button id="cgpaTab">CGPA</button>
+    <button id="themeToggle">☾</button>
+    <button id="logoutBtn">Logout</button>
+  </nav>
 
-<p id="user" style="padding:10px"></p>
+  <p id="user" style="padding:10px"></p>
 
 
-<!-- ================= SCHEDULE ================= -->
-<div id="scheduleSection" class="section active">
+  <!-- ================= SCHEDULE ================= -->
+  <div id="scheduleSection" class="section active">
 
-  <h3>Add Schedule</h3>
+    <h3>Add Schedule</h3>
 
-  <input id="title" placeholder="Event">
-  <input id="time" type="time">
+    <input id="title" placeholder="Event">
+    <input id="time" type="time">
 
-  <div>
-    <label><input type="checkbox" value="Sun">Sun</label>
-    <label><input type="checkbox" value="Mon">Mon</label>
-    <label><input type="checkbox" value="Tue">Tue</label>
-    <label><input type="checkbox" value="Wed">Wed</label>
-    <label><input type="checkbox" value="Thu">Thu</label>
-    <label><input type="checkbox" value="Fri">Fri</label>
-    <label><input type="checkbox" value="Sat">Sat</label>
+    <div>
+      <label><input type="checkbox" value="Sun">Sun</label>
+      <label><input type="checkbox" value="Mon">Mon</label>
+      <label><input type="checkbox" value="Tue">Tue</label>
+      <label><input type="checkbox" value="Wed">Wed</label>
+      <label><input type="checkbox" value="Thu">Thu</label>
+      <label><input type="checkbox" value="Fri">Fri</label>
+      <label><input type="checkbox" value="Sat">Sat</label>
+    </div>
+
+    <button id="addBtn">Add</button>
+
+    <ul id="list"></ul>
+    <style>
+      #scheduleSection .schedule-day-heading {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 1rem 0 0.5rem 0;
+        padding: 0.5rem 10px;
+        background: #333;
+        color: #fff;
+        border-radius: 6px;
+        list-style: none;
+      }
+
+      body.dark #scheduleSection .schedule-day-heading {
+        background: #444;
+      }
+
+      #scheduleSection .schedule-day-heading:first-of-type {
+        margin-top: 0.5rem;
+      }
+
+      #scheduleSection #list {
+        list-style: none;
+        padding-left: 0;
+      }
+    </style>
   </div>
 
-  <button id="addBtn">Add</button>
-
-  <ul id="list"></ul>
-  <style>
-    #scheduleSection .schedule-day-heading {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin: 1rem 0 0.5rem 0;
-      padding: 0.5rem 10px;
-      background: #333;
-      color: #fff;
-      border-radius: 6px;
-      list-style: none;
-    }
-    body.dark #scheduleSection .schedule-day-heading { background: #444; }
-    #scheduleSection .schedule-day-heading:first-of-type { margin-top: 0.5rem; }
-    #scheduleSection #list { list-style: none; padding-left: 0; }
-  </style>
-</div>
 
 
+  <!-- ================= PLANNER ================= -->
+  <div id="plannerSection" class="section">
 
-<!-- ================= PLANNER ================= -->
-<div id="plannerSection" class="section">
+    <h3>Planner</h3>
 
-  <h3>Planner</h3>
+    <input id="taskInput" placeholder="Task">
 
-  <input id="taskInput" placeholder="Task">
+    <select id="priority">
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
+    </select>
 
-  <select id="priority">
-    <option>Low</option>
-    <option>Medium</option>
-    <option>High</option>
-  </select>
+    <button id="taskBtn">Add Task</button>
 
-  <button id="taskBtn">Add Task</button>
-
-  <ul id="taskList"></ul>
-</div>
+    <ul id="taskList"></ul>
+  </div>
 
 
 
-<!-- ================= CGPA ================= -->
-<div id="cgpaSection" class="section">
+  <!-- ================= CGPA ================= -->
+  <div id="cgpaSection" class="section">
 
-  <h3>CGPA Calculator</h3>
+    <h3>CGPA Calculator</h3>
 
-  <!-- ⭐ semester selector -->
-  <select id="semester">
-    <option value="1">Semester 1</option>
-    <option value="2">Semester 2</option>
-    <option value="3">Semester 3</option>
-    <option value="4">Semester 4</option>
-    <option value="5">Semester 5</option>
-    <option value="6">Semester 6</option>
-    <option value="7">Semester 7</option>
-    <option value="8">Semester 8</option>
-  </select>
+    <!-- ⭐ semester selector -->
+    <select id="semester">
+      <option value="1">Semester 1</option>
+      <option value="2">Semester 2</option>
+      <option value="3">Semester 3</option>
+      <option value="4">Semester 4</option>
+      <option value="5">Semester 5</option>
+      <option value="6">Semester 6</option>
+      <option value="7">Semester 7</option>
+      <option value="8">Semester 8</option>
+    </select>
 
-  <br><br>
+    <br><br>
 
-  <input id="subName" placeholder="Subject">
-  <input id="credits" type="number" placeholder="Credits">
-  <input id="grade" placeholder="Grade (O/A+/A/B+)">
+    <input id="subName" placeholder="Subject">
+    <input id="credits" type="number" placeholder="Credits">
+    <input id="grade" placeholder="Grade (O/A+/A/B+)">
 
-  <button id="addSubBtn">Add Subject</button>
+    <button id="addSubBtn">Add Subject</button>
 
-  <ul id="cgpaList"></ul>
+    <ul id="cgpaList"></ul>
 
-  <h3 id="cgpaResult">CGPA: 0</h3>
+    <h3 id="cgpaResult">CGPA: 0</h3>
 
-  <!-- ⭐ chart -->
-  <canvas id="gpaChart" height="120"></canvas><h3 id="overallCgpa">Overall CGPA: 0</h3>
-  <canvas id="gpaChart" height="120"></canvas>
-  <ul id="cgpaList"></ul>
-  
-</div>
+    <!-- ⭐ chart -->
+    <canvas id="gpaChart" height="120"></canvas>
+    <h3 id="overallCgpa">Overall CGPA: 0</h3>
+    <canvas id="gpaChart" height="120"></canvas>
+    <ul id="cgpaList"></ul>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script type="module" src="./js/dashboard.js"></script>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="./js/dashboard.js"></script>
 
 </body>
+
 </html>
