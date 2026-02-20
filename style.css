@@ -576,3 +576,178 @@ body.dark #scheduleSection label {
 #scheduleSection label:hover {
     border-color: var(--primary);
 }
+
+/* ================= CGPA NEW CLASSES ================= */
+
+.cgpa-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 40px;
+    background: rgba(79, 70, 229, 0.05);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+
+.cgpa-chart-container {
+    height: 200px;
+    position: relative;
+}
+
+.semester-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+/* ================= RESPONSIVENESS (MOBILE/TABLET) ================= */
+
+@media (max-width: 1024px) {
+    .dashboard-container {
+        margin: 20px auto;
+    }
+
+    .nav-links {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    nav {
+        padding: 12px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .nav-links {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-item {
+        white-space: nowrap;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .nav-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .cgpa-header {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .cgpa-chart-container {
+        height: 150px;
+    }
+
+    .semester-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .focus-grid {
+        gap: 20px;
+    }
+
+    .timer-display {
+        font-size: 60px;
+    }
+
+    .login-card {
+        padding: 30px 20px;
+    }
+
+    .logo-text {
+        font-size: 22px;
+    }
+
+    .logo-img-nav {
+        width: 30px;
+        height: 30px;
+    }
+
+    .dashboard-container {
+        margin-bottom: 100px;
+        /* Space for bottom nav */
+    }
+
+    .cgpa-header {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .cgpa-chart-container {
+        height: 150px;
+    }
+
+    .semester-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .focus-grid {
+        gap: 20px;
+    }
+
+    .timer-display {
+        font-size: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 0 15px;
+    }
+
+    .timer-display {
+        font-size: 48px;
+    }
+
+    #pomodoroCard:fullscreen .timer-display {
+        font-size: 100px;
+    }
+
+    #pomodoroCard:fullscreen h3 {
+        font-size: 24px;
+    }
+
+    #pomodoroCard:fullscreen .timer-controls .btn {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+
+    #overallCgpa {
+        font-size: 32px !important;
+    }
+
+    .glass-card {
+        padding: 16px;
+    }
+
+    li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    li div[style*="display:flex"] {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .logo-text {
+        font-size: 28px !important;
+        /* Login page specifically */
+    }
+}
