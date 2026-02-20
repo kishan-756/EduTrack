@@ -686,41 +686,34 @@ async function loadFolders() {
     };
 
     // Close dropdown when clicking outside
-    document.addEventListener("click", () => {
+    const closeDropdowns = () => {
       dropdown.style.display = "none";
-    });
+    };
+    document.addEventListener("click", closeDropdowns);
 
-    const folderId = d.id;
-    const folderName = folder.name;
+    const fId = d.id;
+    const fName = folder.name;
 
     card.querySelector(".edit-btn").onclick = (e) => {
       e.stopPropagation();
       dropdown.style.display = "none";
-      openModal(folderId, folderName);
+      openModal(fId, fName);
     };
 
     card.querySelector(".delete-btn").onclick = async (e) => {
       e.stopPropagation();
       dropdown.style.display = "none";
-
-      console.log("Attempting to delete folder:", folderName, folderId);
-
-      if (confirm(`Are you sure you want to delete "${folderName}" and all its contents?`)) {
+      if (confirm(`Are you sure you want to delete "${fName}"?`)) {
         try {
-          const folderRef = doc(db, "users", currentUser.uid, "folders", folderId);
-          await deleteDoc(folderRef);
-          console.log("Folder document deleted successfully");
+          await deleteDoc(doc(db, "users", currentUser.uid, "folders", fId));
           loadFolders();
-        } catch (err) {
-          console.error("Folder deletion failed:", err);
-          alert("Error deleting folder: " + err.message);
-        }
+        } catch (err) { alert("Failed to delete folder: " + err.message); }
       }
     };
 
     card.onclick = (e) => {
       if (!e.target.closest(".folder-menu-btn") && !e.target.closest(".folder-dropdown")) {
-        openFolder(folderId, folderName);
+        openFolder(fId, fName);
       }
     };
 
@@ -779,45 +772,23 @@ async function loadItems() {
     const itemId = d.id;
     const itemName = item.name;
     const itemType = item.type;
-    const fid = currentFolderId; // Capture the current folder ID locally
+    const fid = currentFolderId;
 
     const delBtn = card.querySelector(".delete-resource-btn");
-
-    delBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
+    delBtn.onclick = async (e) => {
       e.stopPropagation();
-
-      console.log(`Manual Delete Triggered: ${itemName} [${itemId}]`);
-
-      if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
-        delBtn.innerHTML = "...";
-        delBtn.disabled = true;
-
+      if (confirm(`Delete "${itemName}"?`)) {
         try {
           if (itemType === "file") {
             try {
-              const storageRef = ref(storage, `users/${currentUser.uid}/${fid}/${itemName}`);
-              await deleteObject(storageRef);
-              console.log("Storage file deleted.");
-            } catch (sErr) {
-              console.warn("Storage deletion error (skipped):", sErr.message);
-            }
+              await deleteObject(ref(storage, `users/${currentUser.uid}/${fid}/${itemName}`));
+            } catch (ignore) { }
           }
-
-          const itemDocRef = doc(db, "users", currentUser.uid, "folders", fid, "items", itemId);
-          await deleteDoc(itemDocRef);
-          console.log("Firestore document deleted.");
-
-          // Re-load items to refresh UI
+          await deleteDoc(doc(db, "users", currentUser.uid, "folders", fid, "items", itemId));
           loadItems();
-        } catch (err) {
-          console.error("Critical Deletion Failure:", err);
-          alert("Deletion failed: " + err.message);
-          delBtn.innerHTML = "×";
-          delBtn.disabled = false;
-        }
+        } catch (err) { alert("Delete failed: " + err.message); }
       }
-    });
+    };
     itemsContainer.appendChild(card);
   });
 
