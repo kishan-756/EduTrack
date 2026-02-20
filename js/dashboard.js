@@ -2,7 +2,11 @@
 // 🔥 IMPORTS
 // =====================================================
 
-import { auth, db } from "../firebase.js";
+import { auth, db, storage } from "../firebase.js";
+
+import {
+  ref, uploadBytes, getDownloadURL, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 import {
   onAuthStateChanged,
@@ -11,7 +15,8 @@ import {
 
 import {
   collection, addDoc, getDocs,
-  deleteDoc, updateDoc, doc, query, where, setDoc, getDoc
+  deleteDoc, updateDoc, doc, query, where, setDoc, getDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 
@@ -24,6 +29,24 @@ const scheduleSection = document.getElementById("scheduleSection");
 const plannerSection = document.getElementById("plannerSection");
 const cgpaSection = document.getElementById("cgpaSection");
 const focusSection = document.getElementById("focusSection");
+const storageSection = document.getElementById("storageSection");
+
+// storage DOM
+const storageGrid = document.getElementById("storageGrid");
+const addItemSection = document.getElementById("addItemSection");
+const createFolderBtn = document.getElementById("createFolderBtn");
+const saveItemBtn = document.getElementById("saveItemBtn");
+const cancelItemBtn = document.getElementById("cancelItemBtn");
+const resourceType = document.getElementById("resourceType");
+const linkInputGroup = document.getElementById("linkInputGroup");
+const fileInputGroup = document.getElementById("fileInputGroup");
+const fileInput = document.getElementById("fileInput");
+const resourceName = document.getElementById("resourceName");
+const resourceUrl = document.getElementById("resourceUrl");
+const folderBreadcrumb = document.getElementById("folderBreadcrumb");
+const folderTitle = document.getElementById("folderTitle");
+
+let currentFolderId = null;
 
 // nav
 const tabs = document.querySelectorAll(".nav-item");
@@ -96,6 +119,7 @@ function show(tabId) {
     scheduleTab: scheduleSection,
     plannerTab: plannerSection,
     cgpaTab: cgpaSection,
+    storageTab: storageSection,
     focusTab: focusSection
   };
 
@@ -108,6 +132,7 @@ function show(tabId) {
   document.getElementById(tabId).classList.add("active");
 
   if (tabId === "focusTab") loadStudyActivity();
+  if (tabId === "storageTab") loadFolders();
 }
 
 tabs.forEach(tab => {
@@ -128,6 +153,7 @@ onAuthStateChanged(auth, user => {
   loadSchedule();
   loadPlanner();
   loadCGPA();
+  loadFolders();
   loadStudyActivity();
 });
 
@@ -563,3 +589,154 @@ async function loadStudyActivity() {
     }
   });
 }
+// =====================================================
+// 📁 STORAGE LOGIC
+// =====================================================
+
+resourceType.onchange = () => {
+  const isFile = resourceType.value === "file";
+  fileInputGroup.style.display = isFile ? "block" : "none";
+  linkInputGroup.style.display = isFile ? "none" : "block";
+};
+
+createFolderBtn.onclick = async () => {
+  const name = prompt("Enter folder/subject name:");
+  if (!name) return;
+
+  try {
+    await addDoc(collection(db, "users", currentUser.uid, "folders"), {
+      name: name,
+      createdAt: serverTimestamp()
+    });
+    loadFolders();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+async function loadFolders() {
+  currentFolderId = null;
+  addItemSection.style.display = "none";
+  storageGrid.innerHTML = "";
+  createFolderBtn.style.display = "block";
+  folderBreadcrumb.innerHTML = '<span style="cursor: pointer; color: var(--primary)" id="rootCrumb">Root</span>';
+  document.getElementById("rootCrumb").onclick = loadFolders;
+
+  const snap = await getDocs(collection(db, "users", currentUser.uid, "folders"));
+  snap.forEach(d => {
+    const folder = d.data();
+    const card = document.createElement("div");
+    card.className = "folder-card";
+    card.innerHTML = `
+      <span class="folder-icon">📁</span>
+      <strong style="display:block; margin-bottom:10px">${folder.name}</strong>
+      <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; color:#ef4444">Delete</button>
+    `;
+
+    card.onclick = (e) => {
+      if (e.target.tagName !== "BUTTON") openFolder(d.id, folder.name);
+    };
+
+    card.querySelector("button").onclick = async () => {
+      if (confirm(`Delete folder "${folder.name}" and all contents?`)) {
+        await deleteDoc(doc(db, "users", currentUser.uid, "folders", d.id));
+        loadFolders();
+      }
+    };
+
+    storageGrid.appendChild(card);
+  });
+}
+
+async function openFolder(id, name) {
+  currentFolderId = id;
+  storageGrid.innerHTML = "";
+  createFolderBtn.style.display = "none";
+  addItemSection.style.display = "block";
+  folderTitle.innerText = name;
+
+  folderBreadcrumb.innerHTML = `
+    <span style="cursor: pointer; color: var(--primary)" id="backRoot">Root</span> / 
+    <span>${name}</span>
+  `;
+  document.getElementById("backRoot").onclick = loadFolders;
+
+  loadItems();
+}
+
+async function loadItems() {
+  const itemsContainer = document.createElement("div");
+  itemsContainer.id = "itemsContainer";
+  // Remove existing items container if any
+  const oldContainer = document.getElementById("itemsContainer");
+  if (oldContainer) oldContainer.remove();
+
+  const snap = await getDocs(collection(db, "users", currentUser.uid, "folders", currentFolderId, "items"));
+
+  snap.forEach(d => {
+    const item = d.data();
+    const row = document.createElement("div");
+    row.className = "resource-item";
+    const icon = item.type === "link" ? "🔗" : "📄";
+
+    row.innerHTML = `
+      <div class="resource-info">
+        <span>${icon}</span>
+        <a href="${item.url}" target="_blank">${item.name}</a>
+      </div>
+      <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; color:#ef4444">X</button>
+    `;
+
+    row.querySelector("button").onclick = async () => {
+      await deleteDoc(doc(db, "users", currentUser.uid, "folders", currentFolderId, "items", d.id));
+      loadItems();
+    };
+    itemsContainer.appendChild(row);
+  });
+
+  addItemSection.insertBefore(itemsContainer, addItemSection.firstChild.nextSibling.nextSibling);
+}
+
+saveItemBtn.onclick = async () => {
+  const type = resourceType.value;
+  let name = resourceName.value;
+  let url = resourceUrl.value;
+
+  if (type === "file") {
+    const file = fileInput.files[0];
+    if (!file) return alert("Please select a file");
+    name = file.name;
+
+    saveItemBtn.innerText = "Uploading...";
+    saveItemBtn.disabled = true;
+
+    try {
+      const storageRef = ref(storage, `users/${currentUser.uid}/${currentFolderId}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      url = await getDownloadURL(storageRef);
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+      saveItemBtn.innerText = "Add to Folder";
+      saveItemBtn.disabled = false;
+      return;
+    }
+  } else {
+    if (!name || !url) return alert("Please fill all fields");
+  }
+
+  await addDoc(collection(db, "users", currentUser.uid, "folders", currentFolderId, "items"), {
+    name,
+    url,
+    type,
+    createdAt: serverTimestamp()
+  });
+
+  resourceName.value = "";
+  resourceUrl.value = "";
+  fileInput.value = "";
+  saveItemBtn.innerText = "Add to Folder";
+  saveItemBtn.disabled = false;
+  loadItems();
+};
+
+cancelItemBtn.onclick = loadFolders;

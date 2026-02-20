@@ -20,6 +20,7 @@
       <div id="scheduleTab" class="nav-item active">Schedule</div>
       <div id="plannerTab" class="nav-item">Planner</div>
       <div id="cgpaTab" class="nav-item">CGPA</div>
+      <div id="storageTab" class="nav-item">Storage</div>
       <div id="focusTab" class="nav-item">Focus</div>
     </div>
     <div class="nav-right">
@@ -115,6 +116,56 @@
           <div id="semesterGrid" class="semester-grid">
             <!-- Semester cards will be injected here -->
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= STORAGE (NEW) ================= -->
+    <div id="storageSection" class="section">
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <h3>Resource Storage</h3>
+          <button id="createFolderBtn" class="btn btn-primary">+ New Folder</button>
+        </div>
+
+        <div id="folderBreadcrumb" style="margin-bottom: 20px; font-size: 14px; color: #64748b;">
+          <span style="cursor: pointer; color: var(--primary)" onclick="loadFolders()">Root</span>
+        </div>
+
+        <div id="storageGrid" class="storage-grid">
+          <!-- Folders and items will be loaded here -->
+        </div>
+
+        <!-- Add Item Form (Initially Hidden) -->
+        <div id="addItemSection"
+          style="display: none; margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--border-light);">
+          <h4 id="folderTitle" style="margin-bottom: 20px;">Folder Name</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">Resource
+                Type</label>
+              <select id="resourceType"
+                style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">
+                <option value="link">Link (Video/Article)</option>
+                <option value="file">File (Image/PDF/Doc)</option>
+              </select>
+            </div>
+            <div id="linkInputGroup">
+              <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">Resource
+                Name</label>
+              <input id="resourceName" type="text" placeholder="e.g. Physics Note 1">
+              <label
+                style="font-size: 14px; font-weight: 600; margin-top: 10px; margin-bottom: 4px; display: block;">URL</label>
+              <input id="resourceUrl" type="text" placeholder="https://...">
+            </div>
+            <div id="fileInputGroup" style="display: none;">
+              <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">Upload File</label>
+              <input id="fileInput" type="file" style="padding: 5px;">
+            </div>
+          </div>
+          <button id="saveItemBtn" class="btn btn-primary" style="margin-top: 20px;">Add to Folder</button>
+          <button id="cancelItemBtn" class="btn btn-outline" style="margin-top: 20px; margin-left:10px">Back to
+            Storage</button>
         </div>
       </div>
     </div>
