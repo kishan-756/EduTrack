@@ -44,9 +44,18 @@ const fileInput = document.getElementById("fileInput");
 const resourceName = document.getElementById("resourceName");
 const resourceUrl = document.getElementById("resourceUrl");
 const folderBreadcrumb = document.getElementById("folderBreadcrumb");
-const folderTitle = document.getElementById("folderTitle");
+const toggleAddItemBtn = document.getElementById("toggleAddItemBtn");
+const closeAddItemBtn = document.getElementById("closeAddItemBtn");
+const backToStorageBtn = document.getElementById("backToStorageBtn");
+
+const folderModal = document.getElementById("folderModal");
+const folderNameInput = document.getElementById("folderNameInput");
+const closeFolderModal = document.getElementById("closeFolderModal");
+const confirmFolderBtn = document.getElementById("confirmFolderBtn");
+const modalTitle = document.getElementById("modalTitle");
 
 let currentFolderId = null;
+let editFolderId = null; // To track if we are editing an existing folder
 
 // nav
 const tabs = document.querySelectorAll(".nav-item");
@@ -599,15 +608,39 @@ resourceType.onchange = () => {
   linkInputGroup.style.display = isFile ? "none" : "block";
 };
 
-createFolderBtn.onclick = async () => {
-  const name = prompt("Enter folder/subject name:");
-  if (!name) return;
+// --- Modal Helpers ---
+const openModal = (id = null, name = "") => {
+  editFolderId = id;
+  folderNameInput.value = name;
+  modalTitle.innerText = id ? "Edit Folder Name" : "Create New Folder";
+  confirmFolderBtn.innerText = id ? "Save Changes" : "Create";
+  folderModal.style.display = "flex";
+  folderNameInput.focus();
+};
+
+const closeModal = () => {
+  folderModal.style.display = "none";
+  editFolderId = null;
+  folderNameInput.value = "";
+};
+
+createFolderBtn.onclick = () => openModal();
+closeFolderModal.onclick = closeModal;
+
+confirmFolderBtn.onclick = async () => {
+  const name = folderNameInput.value.trim();
+  if (!name) return alert("Please enter a name");
 
   try {
-    await addDoc(collection(db, "users", currentUser.uid, "folders"), {
-      name: name,
-      createdAt: serverTimestamp()
-    });
+    if (editFolderId) {
+      await updateDoc(doc(db, "users", currentUser.uid, "folders", editFolderId), { name });
+    } else {
+      await addDoc(collection(db, "users", currentUser.uid, "folders"), {
+        name,
+        createdAt: serverTimestamp()
+      });
+    }
+    closeModal();
     loadFolders();
   } catch (err) {
     console.error(err);
@@ -617,6 +650,8 @@ createFolderBtn.onclick = async () => {
 async function loadFolders() {
   currentFolderId = null;
   addItemSection.style.display = "none";
+  toggleAddItemBtn.style.display = "none";
+  backToStorageBtn.style.display = "none";
   storageGrid.innerHTML = "";
   createFolderBtn.style.display = "block";
   folderBreadcrumb.innerHTML = '<span style="cursor: pointer; color: var(--primary)" id="rootCrumb">Root</span>';
@@ -628,19 +663,64 @@ async function loadFolders() {
     const card = document.createElement("div");
     card.className = "folder-card";
     card.innerHTML = `
+      <button class="folder-menu-btn">⋮</button>
+      <div class="folder-dropdown">
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn" style="color: #ef4444">Delete</button>
+      </div>
       <span class="folder-icon">📁</span>
       <strong style="display:block; margin-bottom:10px">${folder.name}</strong>
-      <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; color:#ef4444">Delete</button>
     `;
 
-    card.onclick = (e) => {
-      if (e.target.tagName !== "BUTTON") openFolder(d.id, folder.name);
+    const menuBtn = card.querySelector(".folder-menu-btn");
+    const dropdown = card.querySelector(".folder-dropdown");
+
+    // Toggle dropdown
+    menuBtn.onclick = (e) => {
+      e.stopPropagation();
+      // Close other open dropdowns
+      document.querySelectorAll(".folder-dropdown").forEach(el => {
+        if (el !== dropdown) el.style.display = "none";
+      });
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
     };
 
-    card.querySelector("button").onclick = async () => {
-      if (confirm(`Delete folder "${folder.name}" and all contents?`)) {
-        await deleteDoc(doc(db, "users", currentUser.uid, "folders", d.id));
-        loadFolders();
+    // Close dropdown when clicking outside
+    document.addEventListener("click", () => {
+      dropdown.style.display = "none";
+    });
+
+    const folderId = d.id;
+    const folderName = folder.name;
+
+    card.querySelector(".edit-btn").onclick = (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+      openModal(folderId, folderName);
+    };
+
+    card.querySelector(".delete-btn").onclick = async (e) => {
+      e.stopPropagation();
+      dropdown.style.display = "none";
+
+      console.log("Attempting to delete folder:", folderName, folderId);
+
+      if (confirm(`Are you sure you want to delete "${folderName}" and all its contents?`)) {
+        try {
+          const folderRef = doc(db, "users", currentUser.uid, "folders", folderId);
+          await deleteDoc(folderRef);
+          console.log("Folder document deleted successfully");
+          loadFolders();
+        } catch (err) {
+          console.error("Folder deletion failed:", err);
+          alert("Error deleting folder: " + err.message);
+        }
+      }
+    };
+
+    card.onclick = (e) => {
+      if (!e.target.closest(".folder-menu-btn") && !e.target.closest(".folder-dropdown")) {
+        openFolder(folderId, folderName);
       }
     };
 
@@ -652,12 +732,13 @@ async function openFolder(id, name) {
   currentFolderId = id;
   storageGrid.innerHTML = "";
   createFolderBtn.style.display = "none";
-  addItemSection.style.display = "block";
-  folderTitle.innerText = name;
+  toggleAddItemBtn.style.display = "block";
+  backToStorageBtn.style.display = "block";
+  addItemSection.style.display = "none";
 
   folderBreadcrumb.innerHTML = `
     <span style="cursor: pointer; color: var(--primary)" id="backRoot">Root</span> / 
-    <span>${name}</span>
+    <span style="font-weight: 700; color: var(--text-light)">${name}</span>
   `;
   document.getElementById("backRoot").onclick = loadFolders;
 
@@ -665,36 +746,86 @@ async function openFolder(id, name) {
 }
 
 async function loadItems() {
-  const itemsContainer = document.createElement("div");
-  itemsContainer.id = "itemsContainer";
-  // Remove existing items container if any
   const oldContainer = document.getElementById("itemsContainer");
   if (oldContainer) oldContainer.remove();
 
+  const itemsContainer = document.createElement("div");
+  itemsContainer.id = "itemsContainer";
+  itemsContainer.style.marginTop = "20px";
+
   const snap = await getDocs(collection(db, "users", currentUser.uid, "folders", currentFolderId, "items"));
+
+  if (snap.empty) {
+    itemsContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">No resources yet. Click "+ Add Resource" to get started!</div>';
+  }
 
   snap.forEach(d => {
     const item = d.data();
-    const row = document.createElement("div");
-    row.className = "resource-item";
+    const card = document.createElement("div");
+    card.className = "resource-item";
     const icon = item.type === "link" ? "🔗" : "📄";
 
-    row.innerHTML = `
+    card.innerHTML = `
       <div class="resource-info">
-        <span>${icon}</span>
-        <a href="${item.url}" target="_blank">${item.name}</a>
+        <div class="resource-icon">${icon}</div>
+        <div>
+          <a href="${item.url}" target="_blank">${item.name}</a>
+          <span class="resource-type-tag">${item.type}</span>
+        </div>
       </div>
-      <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; color:#ef4444">X</button>
+      <button class="delete-resource-btn" title="Delete Resource">×</button>
     `;
 
-    row.querySelector("button").onclick = async () => {
-      await deleteDoc(doc(db, "users", currentUser.uid, "folders", currentFolderId, "items", d.id));
-      loadItems();
-    };
-    itemsContainer.appendChild(row);
+    const itemId = d.id;
+    const itemName = item.name;
+    const itemType = item.type;
+    const fid = currentFolderId; // Capture the current folder ID locally
+
+    const delBtn = card.querySelector(".delete-resource-btn");
+
+    delBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log(`Manual Delete Triggered: ${itemName} [${itemId}]`);
+
+      if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
+        delBtn.innerHTML = "...";
+        delBtn.disabled = true;
+
+        try {
+          if (itemType === "file") {
+            try {
+              const storageRef = ref(storage, `users/${currentUser.uid}/${fid}/${itemName}`);
+              await deleteObject(storageRef);
+              console.log("Storage file deleted.");
+            } catch (sErr) {
+              console.warn("Storage deletion error (skipped):", sErr.message);
+            }
+          }
+
+          const itemDocRef = doc(db, "users", currentUser.uid, "folders", fid, "items", itemId);
+          await deleteDoc(itemDocRef);
+          console.log("Firestore document deleted.");
+
+          // Re-load items to refresh UI
+          loadItems();
+        } catch (err) {
+          console.error("Critical Deletion Failure:", err);
+          alert("Deletion failed: " + err.message);
+          delBtn.innerHTML = "×";
+          delBtn.disabled = false;
+        }
+      }
+    });
+    itemsContainer.appendChild(card);
   });
 
-  addItemSection.insertBefore(itemsContainer, addItemSection.firstChild.nextSibling.nextSibling);
+  // Ensure itemsContainer spans full width and shows items correctly
+  itemsContainer.style.gridColumn = "1 / -1";
+  itemsContainer.style.width = "100%";
+
+  storageGrid.appendChild(itemsContainer);
 }
 
 saveItemBtn.onclick = async () => {
@@ -715,8 +846,9 @@ saveItemBtn.onclick = async () => {
       await uploadBytes(storageRef, file);
       url = await getDownloadURL(storageRef);
     } catch (err) {
-      alert("Upload failed: " + err.message);
-      saveItemBtn.innerText = "Add to Folder";
+      console.error("Upload error:", err);
+      alert("Upload failed. 💡 Tip: Try adding a Google Drive link as a 'Link' resource if your file is too large or failing to upload.");
+      saveItemBtn.innerText = "Save Resource";
       saveItemBtn.disabled = false;
       return;
     }
@@ -734,9 +866,19 @@ saveItemBtn.onclick = async () => {
   resourceName.value = "";
   resourceUrl.value = "";
   fileInput.value = "";
-  saveItemBtn.innerText = "Add to Folder";
+  saveItemBtn.innerText = "Save Resource";
   saveItemBtn.disabled = false;
   loadItems();
 };
 
-cancelItemBtn.onclick = loadFolders;
+toggleAddItemBtn.onclick = () => {
+  addItemSection.style.display = "block";
+  toggleAddItemBtn.style.display = "none";
+};
+
+closeAddItemBtn.onclick = () => {
+  addItemSection.style.display = "none";
+  toggleAddItemBtn.style.display = "block";
+};
+
+backToStorageBtn.onclick = loadFolders;
