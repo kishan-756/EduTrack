@@ -767,30 +767,57 @@ body.dark .resource-item {
     .dashboard-container {
         margin-top: 135px;
         /* Compact offset */
-        margin-bottom: 40px;
+        margin-bottom: 80px;
+        /* Extra bottom space for better scroll */
+        padding: 0 15px;
+    }
+
+    .section {
+        padding: 10px 0;
+    }
+
+    .glass-card {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+        /* Space between stacked cards */
     }
 
     .cgpa-header {
         grid-template-columns: 1fr;
-        gap: 20px;
-        padding: 20px;
+        gap: 24px;
+        padding: 24px 16px;
         text-align: center;
+        margin-bottom: 24px;
     }
 
     .cgpa-chart-container {
-        height: 150px;
+        height: 180px;
     }
 
     .semester-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
 
     .focus-grid {
-        gap: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .storage-grid {
+        gap: 16px;
     }
 
     .timer-display {
         font-size: 60px;
+        margin: 20px 0;
+    }
+
+    /* Override inline grids for better mobile spacing */
+    .section .glass-card>div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
     }
 }
 
