@@ -1,198 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <title>EduTrack Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      transition: 0.3s;
-    }
-
-    body.dark {
-      background: #121212;
-      color: white;
-    }
-
-    nav {
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-      background: #222;
-      flex-wrap: wrap;
-    }
-
-    nav button {
-      color: white;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    .section {
-      display: none;
-      padding: 20px;
-    }
-
-    .active {
-      display: block;
-    }
-
-    li {
-      margin: 8px 0;
-    }
-
-    canvas {
-      margin-top: 20px;
-    }
-
-    .badge {
-      padding: 2px 8px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-left: 8px;
-      color: white;
-    }
-
-    .low {
-      background: #2ecc71;
-    }
-
-    .medium {
-      background: #f39c12;
-    }
-
-    .high {
-      background: #e74c3c;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
   <!-- NAV -->
   <nav>
-    <button id="scheduleTab">Schedule</button>
-    <button id="plannerTab">Planner</button>
-    <button id="cgpaTab">CGPA</button>
-    <button id="themeToggle">☾</button>
-    <button id="logoutBtn">Logout</button>
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="EduTrack Logo" class="logo-img-nav">
+      <span class="logo-text">EduTrack</span>
+    </div>
+    <div class="nav-links">
+      <div id="scheduleTab" class="nav-item active">Schedule</div>
+      <div id="plannerTab" class="nav-item">Planner</div>
+      <div id="cgpaTab" class="nav-item">CGPA</div>
+      <div id="focusTab" class="nav-item">Focus</div>
+    </div>
+    <div class="nav-right">
+      <span id="user" style="font-size: 14px; font-weight: 500;"></span>
+      <button id="themeToggle" class="theme-toggle-btn">☾</button>
+      <button id="logoutBtn" class="btn btn-outline" style="padding: 6px 12px; font-size: 14px;">Logout</button>
+    </div>
   </nav>
 
-  <p id="user" style="padding:10px"></p>
+  <div class="dashboard-container">
 
-
-  <!-- ================= SCHEDULE ================= -->
-  <div id="scheduleSection" class="section active">
-
-    <h3>Add Schedule</h3>
-
-    <input id="title" placeholder="Event">
-    <input id="time" type="time">
-
-    <div>
-      <label><input type="checkbox" value="Sun">Sun</label>
-      <label><input type="checkbox" value="Mon">Mon</label>
-      <label><input type="checkbox" value="Tue">Tue</label>
-      <label><input type="checkbox" value="Wed">Wed</label>
-      <label><input type="checkbox" value="Thu">Thu</label>
-      <label><input type="checkbox" value="Fri">Fri</label>
-      <label><input type="checkbox" value="Sat">Sat</label>
+    <!-- ================= SCHEDULE ================= -->
+    <div id="scheduleSection" class="section active">
+      <div class="glass-card">
+        <h3 style="margin-bottom: 20px;">Manage Schedule</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <input id="title" placeholder="Event / Class Name">
+          <input id="time" type="time">
+        </div>
+        <div style="margin: 15px 0;">
+          <p style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Repeat Days</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <label><input type="checkbox" value="Sun"> Sun</label>
+            <label><input type="checkbox" value="Mon"> Mon</label>
+            <label><input type="checkbox" value="Tue"> Tue</label>
+            <label><input type="checkbox" value="Wed"> Wed</label>
+            <label><input type="checkbox" value="Thu"> Thu</label>
+            <label><input type="checkbox" value="Fri"> Fri</label>
+            <label><input type="checkbox" value="Sat"> Sat</label>
+          </div>
+        </div>
+        <button id="addBtn" class="btn btn-primary">Add Event</button>
+        <ul id="list"></ul>
+      </div>
     </div>
 
-    <button id="addBtn">Add</button>
+    <!-- ================= PLANNER ================= -->
+    <div id="plannerSection" class="section">
+      <div class="glass-card">
+        <h3 style="margin-bottom: 20px;">Study Planner</h3>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+          <input id="taskInput" placeholder="Enter a task...">
+          <select id="priority">
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+        <button id="taskBtn" class="btn btn-primary" style="width: 100%;">Add to Planner</button>
+        <ul id="taskList"></ul>
+      </div>
+    </div>
 
-    <ul id="list"></ul>
-    <style>
-      #scheduleSection .schedule-day-heading {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin: 1rem 0 0.5rem 0;
-        padding: 0.5rem 10px;
-        background: #333;
-        color: #fff;
-        border-radius: 6px;
-        list-style: none;
-      }
+    <!-- ================= CGPA ================= -->
+    <div id="cgpaSection" class="section">
+      <div class="glass-card">
+        <h3 style="margin-bottom: 20px;">Academic Performance</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <select id="semester">
+            <option value="1">Sem 1</option>
+            <option value="2">Sem 2</option>
+            <option value="3">Sem 3</option>
+            <option value="4">Sem 4</option>
+            <option value="5">Sem 5</option>
+            <option value="6">Sem 6</option>
+            <option value="7">Sem 7</option>
+            <option value="8">Sem 8</option>
+          </select>
+          <input id="subName" placeholder="Subject">
+          <input id="credits" type="number" placeholder="Credits">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <input id="grade" placeholder="Grade (O/A+/A/B+)">
+          <button id="addSubBtn" class="btn btn-primary">Add Result</button>
+        </div>
 
-      body.dark #scheduleSection .schedule-day-heading {
-        background: #444;
-      }
+        <div style="margin-top: 30px;">
+          <div
+            style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px; align-items: center; margin-bottom: 40px; background: rgba(79, 70, 229, 0.05); padding: 30px; border-radius: 20px; border: 1px solid rgba(79, 70, 229, 0.1);">
+            <div>
+              <p
+                style="text-transform: uppercase; font-size: 12px; font-weight: 700; color: var(--primary); letter-spacing: 1px; margin-bottom: 8px;">
+                Academic Standing</p>
+              <h4 id="overallCgpa" style="color: var(--primary); font-size: 42px; font-weight: 900; line-height: 1;">
+                0.00</h4>
+              <p style="color: #64748b; font-size: 14px; margin-top: 8px;">Cumulative Grade Point Average</p>
+            </div>
+            <div style="height: 200px; position: relative;">
+              <canvas id="gpaChart"></canvas>
+            </div>
+          </div>
 
-      #scheduleSection .schedule-day-heading:first-of-type {
-        margin-top: 0.5rem;
-      }
+          <h3 style="margin-bottom: 20px;">Semester Breakdown</h3>
+          <div id="semesterGrid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px;">
+            <!-- Semester cards will be injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
 
-      #scheduleSection #list {
-        list-style: none;
-        padding-left: 0;
-      }
-    </style>
+    <!-- ================= FOCUS (NEW) ================= -->
+    <div id="focusSection" class="section">
+      <div class="focus-grid">
+        <div id="pomodoroCard" class="glass-card timer-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Focus Timer</h3>
+            <button id="fullscreenTimer" class="btn btn-outline"
+              style="padding: 4px 8px; font-size: 14px; min-width: auto;" title="Full Screen">⛶</button>
+          </div>
+          <div class="mode-toggle">
+            <button id="studyMode" class="mode-btn active">Study</button>
+            <button id="breakMode" class="mode-btn">Break</button>
+          </div>
+          <div id="timer" class="timer-display">25:00</div>
+          <div class="timer-controls">
+            <button id="startTimer" class="btn btn-primary">Start</button>
+            <button id="resetTimer" class="btn btn-outline">Reset</button>
+          </div>
+        </div>
+        <div class="glass-card">
+          <h3>Study Activity</h3>
+          <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Weekly study hours overview</p>
+          <canvas id="studyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-
-
-  <!-- ================= PLANNER ================= -->
-  <div id="plannerSection" class="section">
-
-    <h3>Planner</h3>
-
-    <input id="taskInput" placeholder="Task">
-
-    <select id="priority">
-      <option>Low</option>
-      <option>Medium</option>
-      <option>High</option>
-    </select>
-
-    <button id="taskBtn">Add Task</button>
-
-    <ul id="taskList"></ul>
-  </div>
-
-
-
-  <!-- ================= CGPA ================= -->
-  <div id="cgpaSection" class="section">
-
-    <h3>CGPA Calculator</h3>
-
-    <!-- ⭐ semester selector -->
-    <select id="semester">
-      <option value="1">Semester 1</option>
-      <option value="2">Semester 2</option>
-      <option value="3">Semester 3</option>
-      <option value="4">Semester 4</option>
-      <option value="5">Semester 5</option>
-      <option value="6">Semester 6</option>
-      <option value="7">Semester 7</option>
-      <option value="8">Semester 8</option>
-    </select>
-
-    <br><br>
-
-    <input id="subName" placeholder="Subject">
-    <input id="credits" type="number" placeholder="Credits">
-    <input id="grade" placeholder="Grade (O/A+/A/B+)">
-
-    <button id="addSubBtn">Add Subject</button>
-
-    <ul id="cgpaList"></ul>
-
-    <h3 id="cgpaResult">CGPA: 0</h3>
-
-    <!-- ⭐ chart -->
-    <canvas id="gpaChart" height="120"></canvas>
-    <h3 id="overallCgpa">Overall CGPA: 0</h3>
-    <canvas id="gpaChart" height="120"></canvas>
-    <ul id="cgpaList"></ul>
-
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="./js/dashboard.js"></script>
 
 </body>
